@@ -115,40 +115,6 @@ function StudioEnvironment() {
 }
 
 /**
- * Camera parallax for the hero: eases the camera a small distance toward the
- * pointer (tracked on window, since overlay copy sits above the canvas) and
- * keeps it aimed at the vial. Gives the scene a subtle "alive" depth.
- */
-function ParallaxRig({ enabled }) {
-  const pointer = useRef({ x: 0, y: 0 });
-  const base = useRef(null);
-
-  useEffect(() => {
-    if (!enabled) return;
-    const onMove = (e) => {
-      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
-    };
-    window.addEventListener('pointermove', onMove, { passive: true });
-    return () => window.removeEventListener('pointermove', onMove);
-  }, [enabled]);
-
-  useFrame((state, delta) => {
-    if (!enabled) return;
-    const cam = state.camera;
-    if (!base.current) base.current = cam.position.clone();
-    const dt = Math.min(delta, 0.05);
-    const tx = base.current.x + pointer.current.x * 0.5;
-    const ty = base.current.y + pointer.current.y * 0.32;
-    cam.position.x = THREE.MathUtils.damp(cam.position.x, tx, 3, dt);
-    cam.position.y = THREE.MathUtils.damp(cam.position.y, ty, 3, dt);
-    cam.lookAt(0, 0, 0);
-  });
-
-  return null;
-}
-
-/**
  * OrbitRig — a small, dependency-free orbit control for the detail view.
  * Drag to spin the vial (with release inertia), wheel to zoom (clamped, no
  * pan). When idle it slowly auto-rotates, speeding up while the label faces
@@ -392,9 +358,6 @@ export default function VialScene({
           </EffectComposer>
         )}
       </Suspense>
-
-      {/* Hero-style scenes lean gently toward the mouse */}
-      <ParallaxRig enabled={big && !interactive && !reducedMotion} />
 
       {/* --- Custom drag-to-spin + zoom on detail views ------------------- */}
       {interactive && <OrbitRig reducedMotion={reducedMotion} />}

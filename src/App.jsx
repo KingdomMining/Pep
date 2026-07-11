@@ -1,22 +1,22 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useStore } from './store/useStore.js';
 import AgeGate from './components/AgeGate.jsx';
-import NavBar from './components/NavBar.jsx';
+import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import CartDrawer from './components/CartDrawer.jsx';
+import PeptideAssistant from './components/PeptideAssistant.jsx';
 import TickerStrip from './components/TickerStrip.jsx';
 import Hero from './pages/Hero.jsx';
 import Gallery from './pages/Gallery.jsx';
 import ProductDetail from './pages/ProductDetail.jsx';
 import LabResults from './pages/LabResults.jsx';
+import Checkout from './pages/Checkout.jsx';
+import OrderConfirmation from './pages/OrderConfirmation.jsx';
 
 // ---------------------------------------------------------------------------
-// <App /> — top-level shell. Renders the blocking age gate, the persistent
-// nav/cart/footer chrome, and swaps the active view. Lightweight state-based
-// routing (no router dependency) keeps this a true single-page app.
-//
-// The site content is only rendered once the age/RUO gate is accepted; before
-// that, the gate covers the entire experience.
+// <App /> — top-level shell. Renders the blocking age gate (shown on every
+// visit), the fixed header (flash banner + minimizing nav), cart, the docked
+// research assistant, the footer, and swaps the active view.
 // ---------------------------------------------------------------------------
 
 export default function App() {
@@ -28,22 +28,17 @@ export default function App() {
     <div className="relative min-h-screen bg-page">
       <AgeGate />
 
-      {/* Only mount the experience after acceptance so nothing (including the
-          heavy 3D canvases) runs behind the blocking gate. */}
       {ageAccepted && (
         <>
-          {/* Ambient color-wash backdrop: two huge, ultra-soft glow blobs that
-              sit behind every page and give the dark canvas gentle depth. */}
-          <div
-            className="pointer-events-none fixed inset-0 overflow-hidden"
-            aria-hidden="true"
-          >
+          {/* Ambient color-wash backdrop behind every page. */}
+          <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
             <div className="absolute -left-40 -top-44 h-[38rem] w-[38rem] rounded-full bg-accent-teal/[0.05] blur-[120px]" />
             <div className="absolute -bottom-52 -right-44 h-[42rem] w-[42rem] rounded-full bg-accent-violet/[0.05] blur-[130px]" />
           </div>
 
-          <NavBar />
+          <Header />
           <CartDrawer />
+          <PeptideAssistant />
 
           <main className="relative z-10">
             <AnimatePresence mode="wait">
@@ -61,10 +56,10 @@ export default function App() {
                     <Gallery />
                   </>
                 )}
-                {view === 'product' && (
-                  <ProductDetail productId={activeProductId} />
-                )}
+                {view === 'product' && <ProductDetail productId={activeProductId} />}
                 {view === 'lab' && <LabResults />}
+                {view === 'checkout' && <Checkout />}
+                {view === 'order' && <OrderConfirmation />}
               </motion.div>
             </AnimatePresence>
           </main>

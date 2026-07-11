@@ -11,10 +11,16 @@ import { RUO_LINE } from './Compliance.jsx';
 export default function CartDrawer() {
   const open = useStore((s) => s.cartOpen);
   const close = useStore((s) => s.closeCart);
+  const navigate = useStore((s) => s.navigate);
   const items = useStore((s) => s.items);
   const setQty = useStore((s) => s.setQty);
   const removeItem = useStore((s) => s.removeItem);
   const subtotal = useStore((s) => s.subtotal());
+
+  const goCheckout = () => {
+    close();
+    navigate('checkout');
+  };
 
   return (
     <AnimatePresence>
@@ -153,11 +159,7 @@ export default function CartDrawer() {
               <button
                 type="button"
                 disabled={items.length === 0}
-                onClick={() =>
-                  alert(
-                    'Checkout is a placeholder in this demo. No order will be processed.'
-                  )
-                }
+                onClick={goCheckout}
                 className="mt-4 w-full rounded-xl bg-content py-3.5 text-sm font-semibold text-page transition enabled:hover:bg-content/90 disabled:cursor-not-allowed disabled:bg-content/10 disabled:text-muted"
               >
                 Checkout
