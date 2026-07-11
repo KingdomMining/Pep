@@ -12,13 +12,20 @@ import { CATEGORY_ACCENT } from '../data/products.js';
 //
 //   Peptides        → slow rising luminescent particle stream (teal/cyan)
 //   Peptide Blends  → two interweaving currents in contrasting hues, merging
-//   Bioregulators   → soft concentric pulsing rings / ripple field (amber)
+//   Bioregulators   → warm amber "aurora bloom": breathing halos + drift embers
 //   Modulators      → oscillating lissajous ribbon (violet)
 //   Powders         → drifting fine-grain particle dust (white/silver)
 //
-// All fields sit slightly behind the vial (z ≈ -1.2) and are scaled by the
-// `intensity` prop (particle counts drop on mobile / when hovered we brighten).
+// Everything lives on a BACKGROUND SLAB centered at BACK_Z, well behind the
+// vial (which sits around z = 0), and is spread WIDE in X/Y so the effect fills
+// the whole frame as a true backdrop rather than crowding around the glass.
+// SPREAD_X/Y are sized to more than cover the camera frustum at that depth.
 // ---------------------------------------------------------------------------
+
+const BACK_Z = -4.2; // depth of the background slab (vial is ~0)
+const SLAB_DEPTH = 2.0; // how far particles range in front of/behind BACK_Z
+const SPREAD_X = 5.0; // half-width of the field (covers frame at BACK_Z)
+const SPREAD_Y = 3.4; // half-height of the field
 
 export default function AmbientField({
   category = 'Peptides',
@@ -32,7 +39,7 @@ export default function AmbientField({
     case 'Peptide Blends':
       return <BlendCurrents liquidColor={liquidColor} {...common} />;
     case 'Bioregulators':
-      return <RippleRings {...common} />;
+      return <AuroraBloom {...common} />;
     case 'Modulators':
       return <LissajousRibbon {...common} />;
     case 'Powders':
@@ -43,7 +50,7 @@ export default function AmbientField({
   }
 }
 
-// A soft round sprite so particles read as glowing points, not hard squares.
+// A soft round sprite so particles/halos read as glowing light, not hard shapes.
 function useSprite() {
   return useMemo(() => {
     const size = 64;
@@ -71,20 +78,20 @@ function useSprite() {
 
 // ---------------------------------------------------------------------------
 // Peptides → slow rising luminescent particle stream, cool teal/cyan.
-// Particles drift upward and wrap back to the bottom; small X/Z sway.
+// Particles drift upward across the whole background slab and wrap around.
 // ---------------------------------------------------------------------------
 function RisingStream({ liquidColor, particleScale, reducedMotion, hovered }) {
   const points = useRef();
   const sprite = useSprite();
-  const count = Math.max(40, Math.round(260 * particleScale));
+  const count = Math.max(60, Math.round(320 * particleScale));
 
   const { positions, seeds } = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const seeds = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      positions[i * 3 + 0] = (Math.random() - 0.5) * 2.6;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 3.2;
-      positions[i * 3 + 2] = -0.6 - Math.random() * 1.4;
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 2 * SPREAD_X;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 2 * SPREAD_Y;
+      positions[i * 3 + 2] = BACK_Z - Math.random() * SLAB_DEPTH;
       seeds[i] = Math.random() * Math.PI * 2;
     }
     return { positions, seeds };
@@ -96,16 +103,15 @@ function RisingStream({ liquidColor, particleScale, reducedMotion, hovered }) {
     const t = state.clock.elapsedTime;
     const arr = points.current.geometry.attributes.position.array;
     for (let i = 0; i < count; i++) {
-      arr[i * 3 + 1] += dt * 0.35; // rise
-      if (arr[i * 3 + 1] > 1.8) arr[i * 3 + 1] = -1.8; // wrap
-      // gentle horizontal sway keyed to a per-particle seed
-      arr[i * 3 + 0] += Math.sin(t * 0.5 + seeds[i]) * dt * 0.06;
+      arr[i * 3 + 1] += dt * 0.45; // rise
+      if (arr[i * 3 + 1] > SPREAD_Y) arr[i * 3 + 1] = -SPREAD_Y; // wrap
+      arr[i * 3 + 0] += Math.sin(t * 0.5 + seeds[i]) * dt * 0.08; // sway
     }
     points.current.geometry.attributes.position.needsUpdate = true;
   });
 
   return (
-    <points ref={points} position={[0, 0, 0]}>
+    <points ref={points}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
@@ -117,7 +123,7 @@ function RisingStream({ liquidColor, particleScale, reducedMotion, hovered }) {
       <pointsMaterial
         map={sprite}
         color={liquidColor || CATEGORY_ACCENT.Peptides}
-        size={hovered ? 0.14 : 0.11}
+        size={hovered ? 0.22 : 0.18}
         transparent
         opacity={0.85}
         depthWrite={false}
@@ -130,20 +136,20 @@ function RisingStream({ liquidColor, particleScale, reducedMotion, hovered }) {
 
 // ---------------------------------------------------------------------------
 // Peptide Blends → two interweaving particle currents in contrasting hues that
-// braid around a shared vertical axis and visually merge in the middle.
+// braid around a shared vertical axis across the background and visually merge.
 // ---------------------------------------------------------------------------
 function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
   const a = useRef();
   const b = useRef();
   const sprite = useSprite();
-  const count = Math.max(30, Math.round(150 * particleScale));
+  const count = Math.max(40, Math.round(190 * particleScale));
 
   const build = () => {
     const positions = new Float32Array(count * 3);
     const seeds = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 3.2;
-      positions[i * 3 + 2] = -0.8 - Math.random() * 1.0;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 2 * SPREAD_Y;
+      positions[i * 3 + 2] = BACK_Z - Math.random() * SLAB_DEPTH;
       seeds[i] = (i / count) * Math.PI * 2;
     }
     return { positions, seeds };
@@ -163,11 +169,11 @@ function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
       if (!ref.current) continue;
       const arr = ref.current.geometry.attributes.position.array;
       for (let i = 0; i < count; i++) {
-        arr[i * 3 + 1] += dt * 0.3;
-        if (arr[i * 3 + 1] > 1.8) arr[i * 3 + 1] = -1.8;
-        // helix: x oscillates with height + time, opposite phase per stream
-        const phase = arr[i * 3 + 1] * 1.4 + t * 0.6 + stream.seeds[i];
-        arr[i * 3 + 0] = Math.sin(phase) * 0.7 * dir;
+        arr[i * 3 + 1] += dt * 0.4;
+        if (arr[i * 3 + 1] > SPREAD_Y) arr[i * 3 + 1] = -SPREAD_Y;
+        // wide helix: x oscillates with height + time, opposite phase per stream
+        const phase = arr[i * 3 + 1] * 1.1 + t * 0.6 + stream.seeds[i];
+        arr[i * 3 + 0] = Math.sin(phase) * SPREAD_X * 0.7 * dir;
       }
       ref.current.geometry.attributes.position.needsUpdate = true;
     }
@@ -190,7 +196,7 @@ function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
         <pointsMaterial
           map={sprite}
           color={warm}
-          size={hovered ? 0.15 : 0.12}
+          size={hovered ? 0.22 : 0.18}
           transparent
           opacity={0.85}
           depthWrite={false}
@@ -210,7 +216,7 @@ function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
         <pointsMaterial
           map={sprite}
           color={cool}
-          size={hovered ? 0.15 : 0.12}
+          size={hovered ? 0.22 : 0.18}
           transparent
           opacity={0.85}
           depthWrite={false}
@@ -223,57 +229,139 @@ function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
 }
 
 // ---------------------------------------------------------------------------
-// Bioregulators → soft concentric pulsing rings / ripple field, warm amber.
-// A stack of ring meshes whose scale + opacity pulse outward on a phase offset.
+// Bioregulators (GHK-Cu) → warm amber "aurora bloom".
+// A soft central glow that slowly breathes, a few large soft halos that expand
+// and fade outward (a gentle ripple, but with no hard geometric edges), and a
+// scatter of slow drifting embers. Camera-facing sprites, so it always reads as
+// a diffuse field of warm light filling the background behind the vial.
 // ---------------------------------------------------------------------------
-function RippleRings({ particleScale, reducedMotion, hovered }) {
-  const group = useRef();
-  const ringCount = Math.max(4, Math.round(7 * particleScale));
-  const rings = useMemo(
-    () => new Array(ringCount).fill(0).map((_, i) => i / ringCount),
-    [ringCount]
-  );
-  const color = CATEGORY_ACCENT.Bioregulators;
+function AuroraBloom({ particleScale, reducedMotion, hovered }) {
+  const haloGroup = useRef();
+  const glow = useRef();
+  const embers = useRef();
+  const sprite = useSprite();
+  const color = CATEGORY_ACCENT.Bioregulators; // warm amber
 
-  useFrame((state) => {
-    if (reducedMotion || !group.current) return;
+  // A handful of expanding halos, each on its own phase offset.
+  const haloCount = Math.max(3, Math.round(5 * particleScale));
+  const haloPhases = useMemo(
+    () => new Array(haloCount).fill(0).map((_, i) => i / haloCount),
+    [haloCount]
+  );
+
+  // Slow drifting embers scattered across the slab. Positions are LOCAL to the
+  // group (which is already offset to BACK_Z), so z stays a small [-SLAB, 0].
+  const emberCount = Math.max(30, Math.round(120 * particleScale));
+  const embersData = useMemo(() => {
+    const positions = new Float32Array(emberCount * 3);
+    const seeds = new Float32Array(emberCount);
+    for (let i = 0; i < emberCount; i++) {
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 2 * SPREAD_X;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 2 * SPREAD_Y;
+      positions[i * 3 + 2] = -Math.random() * SLAB_DEPTH;
+      seeds[i] = Math.random() * Math.PI * 2;
+    }
+    return { positions, seeds };
+  }, [emberCount]);
+
+  useFrame((state, delta) => {
+    if (reducedMotion) return;
     const t = state.clock.elapsedTime;
-    group.current.children.forEach((ring, i) => {
-      // phase travels outward; each ring offset so they ripple in sequence
-      const phase = (t * 0.4 + rings[i]) % 1;
-      const scale = 0.4 + phase * 2.4;
-      ring.scale.set(scale, scale, scale);
-      ring.material.opacity = (1 - phase) * (hovered ? 0.5 : 0.35);
-    });
+    const dt = Math.min(delta, 0.05);
+
+    // Expanding, fading halos → a soft ripple.
+    if (haloGroup.current) {
+      haloGroup.current.children.forEach((halo, i) => {
+        const phase = (t * 0.18 + haloPhases[i]) % 1;
+        const s = 1.2 + phase * 6.5; // grows outward and large
+        halo.scale.set(s, s, 1);
+        halo.material.opacity = (1 - phase) * (hovered ? 0.32 : 0.22);
+      });
+    }
+
+    // Central glow breathes gently.
+    if (glow.current) {
+      const b = 4.4 + Math.sin(t * 0.6) * 0.5;
+      glow.current.scale.set(b, b, 1);
+      glow.current.material.opacity = 0.28 + Math.sin(t * 0.6) * 0.06;
+    }
+
+    // Embers drift slowly upward and sway.
+    if (embers.current) {
+      const arr = embers.current.geometry.attributes.position.array;
+      const { seeds } = embersData;
+      for (let i = 0; i < emberCount; i++) {
+        arr[i * 3 + 1] += dt * 0.12;
+        if (arr[i * 3 + 1] > SPREAD_Y) arr[i * 3 + 1] = -SPREAD_Y;
+        arr[i * 3 + 0] += Math.sin(t * 0.3 + seeds[i]) * dt * 0.05;
+      }
+      embers.current.geometry.attributes.position.needsUpdate = true;
+    }
   });
 
   return (
-    <group ref={group} position={[0, 0, -1.1]}>
-      {rings.map((_, i) => (
-        <mesh key={i} rotation={[0, 0, 0]}>
-          <ringGeometry args={[0.62, 0.7, 80]} />
-          <meshBasicMaterial
-            color={color}
-            transparent
-            opacity={0.3}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
+    <group position={[0, 0, BACK_Z]}>
+      {/* Central warm glow */}
+      <sprite ref={glow} scale={[4.4, 4.4, 1]}>
+        <spriteMaterial
+          map={sprite}
+          color={color}
+          transparent
+          opacity={0.28}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </sprite>
+
+      {/* Expanding soft halos (the ripple) */}
+      <group ref={haloGroup}>
+        {haloPhases.map((_, i) => (
+          <sprite key={i} scale={[1.2, 1.2, 1]}>
+            <spriteMaterial
+              map={sprite}
+              color={color}
+              transparent
+              opacity={0.2}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </sprite>
+        ))}
+      </group>
+
+      {/* Drifting embers (positions are local to this BACK_Z group) */}
+      <points ref={embers}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            count={emberCount}
+            array={embersData.positions}
+            itemSize={3}
           />
-        </mesh>
-      ))}
+        </bufferGeometry>
+        <pointsMaterial
+          map={sprite}
+          color={color}
+          size={hovered ? 0.16 : 0.13}
+          transparent
+          opacity={0.75}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
+        />
+      </points>
     </group>
   );
 }
 
 // ---------------------------------------------------------------------------
 // Modulators → oscillating waveform / lissajous ribbon, violet.
-// A line traced along a lissajous curve whose phase advances over time, so the
-// ribbon appears to oscillate and fold through itself.
+// A line traced along a lissajous curve whose phase advances over time, scaled
+// wide so it spans the background behind the vial.
 // ---------------------------------------------------------------------------
 function LissajousRibbon({ particleScale, reducedMotion, hovered }) {
   const line = useRef();
-  const segs = Math.max(120, Math.round(320 * particleScale));
+  const segs = Math.max(160, Math.round(360 * particleScale));
   const color = CATEGORY_ACCENT.Modulators;
 
   const positions = useMemo(() => new Float32Array(segs * 3), [segs]);
@@ -286,11 +374,13 @@ function LissajousRibbon({ particleScale, reducedMotion, hovered }) {
     const a = 3,
       b = 2;
     const delta = t * 0.4;
+    const AX = SPREAD_X * 0.78;
+    const AY = SPREAD_Y * 0.82;
     for (let i = 0; i < segs; i++) {
       const u = (i / (segs - 1)) * Math.PI * 2;
-      arr[i * 3 + 0] = Math.sin(a * u + delta) * 1.15;
-      arr[i * 3 + 1] = Math.sin(b * u) * 1.15;
-      arr[i * 3 + 2] = -1.1 + Math.cos(u + t * 0.2) * 0.15;
+      arr[i * 3 + 0] = Math.sin(a * u + delta) * AX;
+      arr[i * 3 + 1] = Math.sin(b * u) * AY;
+      arr[i * 3 + 2] = BACK_Z + Math.cos(u + t * 0.2) * 0.3;
     }
     line.current.geometry.attributes.position.needsUpdate = true;
     line.current.geometry.computeBoundingSphere();
@@ -319,20 +409,20 @@ function LissajousRibbon({ particleScale, reducedMotion, hovered }) {
 
 // ---------------------------------------------------------------------------
 // Powders → drifting fine-grain particle dust, muted white/silver.
-// Many tiny slow particles with a lazy brownian-ish drift; wraps in a box.
+// Many tiny slow particles with a lazy brownian-ish drift filling the slab.
 // ---------------------------------------------------------------------------
 function DustField({ particleScale, reducedMotion, hovered }) {
   const points = useRef();
   const sprite = useSprite();
-  const count = Math.max(60, Math.round(340 * particleScale));
+  const count = Math.max(80, Math.round(420 * particleScale));
 
   const { positions, vel } = useMemo(() => {
     const positions = new Float32Array(count * 3);
     const vel = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      positions[i * 3 + 0] = (Math.random() - 0.5) * 3.0;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 3.0;
-      positions[i * 3 + 2] = -0.5 - Math.random() * 1.6;
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 2 * SPREAD_X;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 2 * SPREAD_Y;
+      positions[i * 3 + 2] = BACK_Z - Math.random() * SLAB_DEPTH;
       vel[i * 3 + 0] = (Math.random() - 0.5) * 0.04;
       vel[i * 3 + 1] = (Math.random() - 0.5) * 0.04;
       vel[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
@@ -345,13 +435,16 @@ function DustField({ particleScale, reducedMotion, hovered }) {
     const dt = Math.min(delta, 0.05);
     const arr = points.current.geometry.attributes.position.array;
     for (let i = 0; i < count; i++) {
-      for (let k = 0; k < 3; k++) {
-        arr[i * 3 + k] += vel[i * 3 + k] * dt * 12;
-        // soft wrap inside a 3-unit box centered on the vial
-        const limit = k === 2 ? 2.1 : 1.6;
-        if (arr[i * 3 + k] > limit) arr[i * 3 + k] = -limit;
-        if (arr[i * 3 + k] < -limit) arr[i * 3 + k] = limit;
-      }
+      arr[i * 3 + 0] += vel[i * 3 + 0] * dt * 12;
+      arr[i * 3 + 1] += vel[i * 3 + 1] * dt * 12;
+      arr[i * 3 + 2] += vel[i * 3 + 2] * dt * 12;
+      if (arr[i * 3 + 0] > SPREAD_X) arr[i * 3 + 0] = -SPREAD_X;
+      if (arr[i * 3 + 0] < -SPREAD_X) arr[i * 3 + 0] = SPREAD_X;
+      if (arr[i * 3 + 1] > SPREAD_Y) arr[i * 3 + 1] = -SPREAD_Y;
+      if (arr[i * 3 + 1] < -SPREAD_Y) arr[i * 3 + 1] = SPREAD_Y;
+      const zc = arr[i * 3 + 2];
+      if (zc > BACK_Z + SLAB_DEPTH) arr[i * 3 + 2] = BACK_Z - SLAB_DEPTH;
+      if (zc < BACK_Z - SLAB_DEPTH) arr[i * 3 + 2] = BACK_Z + SLAB_DEPTH;
     }
     points.current.geometry.attributes.position.needsUpdate = true;
   });
@@ -369,7 +462,7 @@ function DustField({ particleScale, reducedMotion, hovered }) {
       <pointsMaterial
         map={sprite}
         color={CATEGORY_ACCENT.Powders}
-        size={hovered ? 0.075 : 0.06}
+        size={hovered ? 0.1 : 0.08}
         transparent
         opacity={0.7}
         depthWrite={false}
