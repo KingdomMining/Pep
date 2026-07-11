@@ -102,15 +102,19 @@ export default function VialScene({
   quality = { particleScale: 1, dpr: [1, 2] },
   paused = false,
   big = false,
+  // Extra downward nudge for the vial (hero pushes it down a touch so the bob
+  // stays inside the frame).
+  vialOffsetY = 0,
   // Postprocessing (bloom/DoF) is expensive per-canvas. Reserve it for the
   // large hero/detail scenes; gallery cards get the glow from emissive liquid
   // + a CSS radial halo instead, so many card canvases stay smooth together.
   bloom = big,
   className,
 }) {
-  // Static camera slightly angled; a touch further back on big scenes.
+  // Static camera slightly angled. Cards sit a bit further back (zoomed out)
+  // so the vial + label frame comfortably without clipping the cap.
   const camera = useMemo(
-    () => ({ position: [0, 0.1, big ? 4.2 : 4.0], fov: 34 }),
+    () => ({ position: [0, 0.1, big ? 4.2 : 4.6], fov: 34 }),
     [big]
   );
 
@@ -170,6 +174,8 @@ export default function VialScene({
           hovered={hovered}
           reducedMotion={reducedMotion}
           interactive={interactive}
+          offsetY={vialOffsetY}
+          label={product?.name}
         />
 
         {/* --- Post: bloom (hover-reactive) + DoF on big scenes + vignette --- */}

@@ -169,10 +169,11 @@ function BlendCurrents({ liquidColor, particleScale, reducedMotion, hovered }) {
       if (!ref.current) continue;
       const arr = ref.current.geometry.attributes.position.array;
       for (let i = 0; i < count; i++) {
-        arr[i * 3 + 1] += dt * 0.4;
+        arr[i * 3 + 1] += dt * 0.22; // rise (slowed)
         if (arr[i * 3 + 1] > SPREAD_Y) arr[i * 3 + 1] = -SPREAD_Y;
-        // wide helix: x oscillates with height + time, opposite phase per stream
-        const phase = arr[i * 3 + 1] * 1.1 + t * 0.6 + stream.seeds[i];
+        // wide helix: x oscillates with height + time, opposite phase per
+        // stream. The time term is kept gentle so the braid drifts calmly.
+        const phase = arr[i * 3 + 1] * 1.1 + t * 0.22 + stream.seeds[i];
         arr[i * 3 + 0] = Math.sin(phase) * SPREAD_X * 0.7 * dir;
       }
       ref.current.geometry.attributes.position.needsUpdate = true;

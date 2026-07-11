@@ -37,6 +37,7 @@ export default function Hero() {
           reducedMotion={reducedMotion}
           quality={quality}
           paused={!inView}
+          vialOffsetY={-0.18}
           big
         />
       </div>
