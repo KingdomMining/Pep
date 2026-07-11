@@ -72,7 +72,7 @@ export default function Hero() {
           className="mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tightish text-white sm:text-6xl"
         >
           Premium, verified
-          <span className="block bg-gradient-to-r from-accent-teal via-white to-accent-blue bg-clip-text text-transparent">
+          <span className="animate-shimmer block bg-gradient-to-r from-accent-teal via-white to-accent-blue bg-clip-text bg-[length:200%_auto] text-transparent">
             research material.
           </span>
         </motion.h1>
@@ -108,6 +108,20 @@ export default function Hero() {
           >
             View verification
           </button>
+        </motion.div>
+
+        {/* Quiet trust strip under the CTAs */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] font-medium uppercase tracking-wideish text-slate-500"
+        >
+          <span>HPLC purity ≥ 98%</span>
+          <span className="text-accent-teal/50">✦</span>
+          <span>Third-party verified lots</span>
+          <span className="text-accent-teal/50">✦</span>
+          <span>Lot-specific COAs</span>
         </motion.div>
       </div>
 

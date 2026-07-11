@@ -1,6 +1,12 @@
-import { Suspense, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, Lightformer, OrbitControls } from '@react-three/drei';
+import {
+  ContactShadows,
+  Environment,
+  Lightformer,
+  OrbitControls,
+  Sparkles,
+} from '@react-three/drei';
 import {
   EffectComposer,
   Bloom,
@@ -15,15 +21,18 @@ import AmbientField from './AmbientField.jsx';
 // <VialScene /> — a reusable R3F canvas that stages a single product: soft
 // key + rim lighting, a procedural studio environment (built in-memory from
 // Lightformers so glass reflects convincingly with NO network HDRI fetch),
-// the ambient category field, the glass vial, and a bloom/DoF post stack.
+// the ambient category field, the glass vial, floating sparkles + a soft
+// contact shadow on big scenes, and a bloom/DoF post stack.
 //
-// Bloom intensity eases up while `hovered` is true (per the brief: "on hover…
-// bloom intensifies"). This is done inside useFrame so it animates smoothly.
+// Extra life on the big scenes:
+//   • ParallaxRig  — the camera leans gently toward the mouse (hero).
+//   • AdaptiveOrbit — detail-view auto-rotate speeds up while the label faces
+//     away from the camera, so the sticker spends less time hidden.
 // ---------------------------------------------------------------------------
 
-const BLOOM = { idle: 0.7, hover: 1.5, ease: 4 };
+const BLOOM = { idle: 0.7, hover: 1.6, ease: 4 };
 
-function HoverBloom({ hovered, reducedMotion }) {
+function HoverBloom({ hovered }) {
   const ref = useRef();
   const hoveredRef = useRef(hovered);
   hoveredRef.current = hovered;
@@ -91,6 +100,73 @@ function StudioEnvironment() {
         scale={[12, 12, 1]}
       />
     </Environment>
+  );
+}
+
+/**
+ * Camera parallax for the hero: eases the camera a small distance toward the
+ * pointer (tracked on window, since overlay copy sits above the canvas) and
+ * keeps it aimed at the vial. Gives the scene a subtle "alive" depth.
+ */
+function ParallaxRig({ enabled }) {
+  const pointer = useRef({ x: 0, y: 0 });
+  const base = useRef(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onMove = (e) => {
+      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => window.removeEventListener('pointermove', onMove);
+  }, [enabled]);
+
+  useFrame((state, delta) => {
+    if (!enabled) return;
+    const cam = state.camera;
+    if (!base.current) base.current = cam.position.clone();
+    const dt = Math.min(delta, 0.05);
+    const tx = base.current.x + pointer.current.x * 0.5;
+    const ty = base.current.y + pointer.current.y * 0.32;
+    cam.position.x = THREE.MathUtils.damp(cam.position.x, tx, 3, dt);
+    cam.position.y = THREE.MathUtils.damp(cam.position.y, ty, 3, dt);
+    cam.lookAt(0, 0, 0);
+  });
+
+  return null;
+}
+
+/**
+ * OrbitControls-lite for the detail view whose auto-rotate is label-aware:
+ * the label faces +Z, so while the camera's azimuth carries it behind the
+ * vial we speed the rotation up — the sticker spends less time hidden.
+ */
+function AdaptiveOrbit({ reducedMotion }) {
+  const ref = useRef();
+
+  useFrame(() => {
+    const c = ref.current;
+    if (!c || !c.autoRotate) return;
+    const hidden = (1 - Math.cos(c.getAzimuthalAngle())) / 2;
+    c.autoRotateSpeed = 0.9 * (1 + 2.6 * Math.pow(hidden, 1.6));
+  });
+
+  return (
+    <OrbitControls
+      ref={ref}
+      enablePan={false}
+      enableZoom
+      minDistance={2.6}
+      maxDistance={5.5}
+      minPolarAngle={Math.PI * 0.2}
+      maxPolarAngle={Math.PI * 0.8}
+      autoRotate={!reducedMotion}
+      autoRotateSpeed={0.9}
+      rotateSpeed={0.6}
+      enableDamping
+      dampingFactor={0.08}
+    />
   );
 }
 
@@ -169,6 +245,19 @@ export default function VialScene({
           hovered={hovered}
         />
 
+        {/* Fine floating motes around the vial on big scenes — depth + life */}
+        {big && (
+          <Sparkles
+            count={Math.max(24, Math.round(70 * quality.particleScale))}
+            scale={[7, 4.5, 3]}
+            position={[0, 0, -0.6]}
+            size={2.2}
+            speed={reducedMotion ? 0 : 0.25}
+            opacity={0.5}
+            color={product?.liquidColor || '#9be8ff'}
+          />
+        )}
+
         <Vial
           liquidColor={product?.liquidColor}
           hovered={hovered}
@@ -178,15 +267,28 @@ export default function VialScene({
           label={product?.name}
         />
 
+        {/* Soft grounding shadow beneath the vial on big scenes */}
+        {big && (
+          <ContactShadows
+            position={[0, -1.5 + vialOffsetY, 0]}
+            opacity={0.55}
+            scale={7}
+            blur={2.4}
+            far={2.2}
+            color="#000000"
+            frames={reducedMotion ? 1 : Infinity}
+          />
+        )}
+
         {/* --- Post: bloom (hover-reactive) + DoF on big scenes + vignette --- */}
         {bloom && (
           <EffectComposer disableNormalPass multisampling={big ? 4 : 0}>
-            <HoverBloom hovered={hovered} reducedMotion={reducedMotion} />
+            <HoverBloom hovered={hovered} />
             {big ? (
               <DepthOfField
                 focusDistance={0.01}
                 focalLength={0.06}
-                bokehScale={3}
+                bokehScale={2.2}
               />
             ) : (
               <></>
@@ -196,22 +298,11 @@ export default function VialScene({
         )}
       </Suspense>
 
-      {/* --- OrbitControls-lite on detail views: spin only, limited zoom --- */}
-      {interactive && (
-        <OrbitControls
-          enablePan={false}
-          enableZoom
-          minDistance={2.6}
-          maxDistance={5.5}
-          minPolarAngle={Math.PI * 0.2}
-          maxPolarAngle={Math.PI * 0.8}
-          autoRotate={!reducedMotion}
-          autoRotateSpeed={0.9}
-          rotateSpeed={0.6}
-          enableDamping
-          dampingFactor={0.08}
-        />
-      )}
+      {/* Hero-style scenes lean gently toward the mouse */}
+      <ParallaxRig enabled={big && !interactive && !reducedMotion} />
+
+      {/* --- Label-aware OrbitControls-lite on detail views ---------------- */}
+      {interactive && <AdaptiveOrbit reducedMotion={reducedMotion} />}
     </Canvas>
   );
 }

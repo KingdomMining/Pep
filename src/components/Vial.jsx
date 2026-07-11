@@ -26,11 +26,13 @@ const ANIM = {
   idleSpin: 0.3, // rad/s — base idle Y rotation (per brief: ~0.3)
   hoverSpin: 0.9, // rad/s — eased-to spin while hovered
   spinEase: 2.5, // how quickly current spin approaches the target
+  labelBoost: 2.6, // extra spin multiplier while the label faces away
+  maxSpin: 2.2, // rad/s hard cap so hover + boost never gets frantic
   bobAmplitude: 0.06, // world units of vertical travel
   bobFrequency: 1.1, // radians/sec of the bob sine wave
   hoverScale: 1.08, // scale multiplier while hovered
   scaleEase: 8, // how quickly scale approaches its target
-  staticTilt: 0.5, // fixed Y angle used in reduced-motion mode
+  staticTilt: 0.15, // fixed Y angle in reduced-motion mode (label stays legible)
 };
 
 // The vial geometry runs y ≈ -0.9 (base) → +1.25 (cap top), so its visual
@@ -112,8 +114,17 @@ export default function Vial({
     }
 
     // --- Spin: ease current speed toward idle or hover target -------------
+    // Label-aware pacing: the sticker faces +Z (the camera) at rotation.y = 0.
+    // `hidden` runs 0 (label dead-centre to camera) → 1 (label fully away);
+    // while hidden we multiply the spin up so the label spends less time out
+    // of view, then it eases back to the slow drift as it swings around.
     if (!interactive) {
-      const targetSpin = hovered ? ANIM.hoverSpin : ANIM.idleSpin;
+      let targetSpin = hovered ? ANIM.hoverSpin : ANIM.idleSpin;
+      if (label) {
+        const hidden = (1 - Math.cos(g.rotation.y)) / 2;
+        targetSpin *= 1 + ANIM.labelBoost * Math.pow(hidden, 1.6);
+        targetSpin = Math.min(targetSpin, ANIM.maxSpin);
+      }
       currentSpin.current +=
         (targetSpin - currentSpin.current) * Math.min(1, ANIM.spinEase * dt);
       g.rotation.y += currentSpin.current * dt;

@@ -51,6 +51,29 @@
     text-wrap: balance;
   }
 
+  /* Endless left-scrolling marquee (content is doubled; -50% = one full run). */
+  .animate-marquee {
+    animation: marquee 42s linear infinite;
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Slow shimmer across gradient text (pair with bg-[length:200%_auto]). */
+  .animate-shimmer {
+    animation: shimmer 6s linear infinite;
+  }
+  @keyframes shimmer {
+    to {
+      background-position: 200% center;
+    }
+  }
+
   /* Soft radial vignette used behind hero + detail scenes. */
   .radial-vignette {
     background: radial-gradient(
