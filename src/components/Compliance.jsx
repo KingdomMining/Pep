@@ -16,7 +16,7 @@ export function RuoPill({ className = '' }) {
   return (
     <span
       className={
-        'inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-wideish text-slate-300 ' +
+        'inline-flex items-center gap-1.5 rounded-full border border-line/10 bg-content/5 px-3 py-1 text-[11px] font-medium uppercase tracking-wideish text-muted ' +
         className
       }
     >
@@ -55,11 +55,11 @@ export function DisclaimerBlock({ className = '' }) {
   return (
     <div
       className={
-        'rounded-xl border border-white/10 bg-white/[0.02] p-4 text-xs leading-relaxed text-slate-400 ' +
+        'rounded-xl border border-line/10 bg-content/[0.02] p-4 text-xs leading-relaxed text-muted ' +
         className
       }
     >
-      <p className="font-medium text-slate-300">{RUO_LINE}</p>
+      <p className="font-medium text-muted">{RUO_LINE}</p>
       <p className="mt-2">{FDA_LINE}</p>
     </div>
   );

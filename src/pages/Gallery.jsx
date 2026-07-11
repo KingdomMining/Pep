@@ -40,10 +40,10 @@ export default function Gallery() {
           <p className="text-[11px] font-semibold uppercase tracking-wideish text-accent-teal">
             The catalog
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tightish text-white sm:text-4xl">
+          <h2 className="mt-2 text-3xl font-semibold tracking-tightish text-content sm:text-4xl">
             Reference compounds
           </h2>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
             Each vial is rendered live. Hover to spin it up; select one to
             inspect specifications and analytical verification.
           </p>
@@ -59,8 +59,8 @@ export default function Gallery() {
               className={
                 'rounded-full border px-3.5 py-1.5 text-xs font-medium transition ' +
                 (filter === c
-                  ? 'border-white/30 bg-white/10 text-white'
-                  : 'border-white/10 text-slate-400 hover:border-white/20 hover:text-white')
+                  ? 'border-line/30 bg-content/10 text-content'
+                  : 'border-line/10 text-muted hover:border-line/20 hover:text-content')
               }
             >
               {c}

@@ -28,7 +28,7 @@ export default function CartDrawer() {
             onClick={close}
           />
           <motion.aside
-            className="fixed right-0 top-0 z-[90] flex h-full w-full max-w-md flex-col border-l border-white/10 bg-ink-800/95 backdrop-blur-xl"
+            className="fixed right-0 top-0 z-[90] flex h-full w-full max-w-md flex-col border-l border-line/10 bg-surface2/95 backdrop-blur-xl"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -36,15 +36,15 @@ export default function CartDrawer() {
             role="dialog"
             aria-label="Shopping cart"
           >
-            <header className="flex items-center justify-between border-b border-white/10 px-6 py-5">
-              <h2 className="text-base font-semibold uppercase tracking-wideish text-white">
+            <header className="flex items-center justify-between border-b border-line/10 px-6 py-5">
+              <h2 className="text-base font-semibold uppercase tracking-wideish text-content">
                 Cart
               </h2>
               <button
                 type="button"
                 onClick={close}
                 aria-label="Close cart"
-                className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                className="rounded-lg p-1.5 text-muted transition hover:bg-content/10 hover:text-content"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
@@ -59,8 +59,8 @@ export default function CartDrawer() {
 
             <div className="thin-scroll flex-1 overflow-y-auto px-6 py-4">
               {items.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-center text-slate-500">
-                  <div className="mb-3 rounded-full border border-white/10 p-4">
+                <div className="flex h-full flex-col items-center justify-center text-center text-muted">
+                  <div className="mb-3 rounded-full border border-line/10 p-4">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
                       <path
                         d="M6 6h15l-1.5 9h-12L6 6zM6 6L5 3H2m4 15a1 1 0 100 2 1 1 0 000-2zm11 0a1 1 0 100 2 1 1 0 000-2z"
@@ -78,14 +78,14 @@ export default function CartDrawer() {
                   {items.map((item) => (
                     <li
                       key={item.key}
-                      className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
+                      className="rounded-xl border border-line/10 bg-content/[0.02] p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-sm font-medium text-content">
                             {item.name}
                           </p>
-                          <p className="mt-0.5 text-xs text-slate-400">
+                          <p className="mt-0.5 text-xs text-muted">
                             {item.size} · {formatUSD(item.price)}
                           </p>
                         </div>
@@ -93,7 +93,7 @@ export default function CartDrawer() {
                           type="button"
                           onClick={() => removeItem(item.key)}
                           aria-label={`Remove ${item.name}`}
-                          className="text-slate-500 transition hover:text-red-400"
+                          className="text-muted transition hover:text-red-400"
                         >
                           <svg
                             width="16"
@@ -112,28 +112,28 @@ export default function CartDrawer() {
                       </div>
 
                       <div className="mt-3 flex items-center justify-between">
-                        <div className="inline-flex items-center rounded-lg border border-white/10">
+                        <div className="inline-flex items-center rounded-lg border border-line/10">
                           <button
                             type="button"
                             aria-label="Decrease quantity"
                             onClick={() => setQty(item.key, item.qty - 1)}
-                            className="px-3 py-1.5 text-slate-300 transition hover:text-white"
+                            className="px-3 py-1.5 text-muted transition hover:text-content"
                           >
                             −
                           </button>
-                          <span className="min-w-[2rem] text-center text-sm text-white">
+                          <span className="min-w-[2rem] text-center text-sm text-content">
                             {item.qty}
                           </span>
                           <button
                             type="button"
                             aria-label="Increase quantity"
                             onClick={() => setQty(item.key, item.qty + 1)}
-                            className="px-3 py-1.5 text-slate-300 transition hover:text-white"
+                            className="px-3 py-1.5 text-muted transition hover:text-content"
                           >
                             +
                           </button>
                         </div>
-                        <span className="text-sm font-medium text-white">
+                        <span className="text-sm font-medium text-content">
                           {formatUSD(item.price * item.qty)}
                         </span>
                       </div>
@@ -143,10 +143,10 @@ export default function CartDrawer() {
               )}
             </div>
 
-            <footer className="border-t border-white/10 px-6 py-5">
+            <footer className="border-t border-line/10 px-6 py-5">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Subtotal</span>
-                <span className="text-lg font-semibold text-white">
+                <span className="text-muted">Subtotal</span>
+                <span className="text-lg font-semibold text-content">
                   {formatUSD(subtotal)}
                 </span>
               </div>
@@ -158,11 +158,11 @@ export default function CartDrawer() {
                     'Checkout is a placeholder in this demo. No order will be processed.'
                   )
                 }
-                className="mt-4 w-full rounded-xl bg-white py-3.5 text-sm font-semibold text-ink-900 transition enabled:hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+                className="mt-4 w-full rounded-xl bg-content py-3.5 text-sm font-semibold text-page transition enabled:hover:bg-content/90 disabled:cursor-not-allowed disabled:bg-content/10 disabled:text-muted"
               >
                 Checkout
               </button>
-              <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500">
+              <p className="mt-3 text-center text-[11px] leading-relaxed text-muted">
                 {RUO_LINE}
               </p>
             </footer>

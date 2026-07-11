@@ -134,10 +134,26 @@ imply any physiological effect:
 
 ---
 
+## Theme (light / dark)
+
+A theme toggle lives in the nav (sun/moon). The choice is persisted and applied
+before first paint (a tiny inline script in `index.html`) to avoid a flash.
+Colors are driven by CSS-variable-backed semantic tokens (`page`, `surface`,
+`content`, `muted`, `line` — see `src/index.css` + `tailwind.config.js`), so
+components style once and both themes follow. The 3D "display cases" (hero and
+every product canvas) intentionally stay cinematic dark in **both** themes via
+the `.stage-bg` utility, so the glowing glass vials always read.
+
 ## Extending the catalog
 
 Add entries to the `seed` array in `src/data/products.js`. Each item needs an
 `id`, `name`, `category` (one of the five above), a price (`price` or
 `priceMin`/`priceMax`), and a `liquidColor`. Everything else (variants, spec
-block) is filled in with sensible defaults. Keep all copy factual and
-research-framed.
+block, a neutral default description) is filled in automatically. Keep all copy
+factual and research-framed.
+
+> **Placeholder pricing:** the source catalog (ruo.bio) gates its listing and
+> pricing behind account login, so the prices on the expanded SKUs are
+> **placeholders**. The product names are real, public compound identifiers used
+> for identification only. Replace the price ranges with the real figures once
+> available.

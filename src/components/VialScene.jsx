@@ -198,6 +198,17 @@ export default function VialScene({
   // battery and pauses off-screen canvases, per the perf brief).
   const frameloop = reducedMotion || paused ? 'demand' : 'always';
 
+  // When mounted lazily (gallery cards mount once scrolled near), R3F's
+  // measure hook can miss the already-laid-out container and leave the canvas
+  // at its 300×150 default. A one-shot synthetic resize forces a correct
+  // re-measure against the real container size.
+  useEffect(() => {
+    const id = requestAnimationFrame(() =>
+      window.dispatchEvent(new Event('resize'))
+    );
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <Canvas
       className={className}

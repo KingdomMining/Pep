@@ -48,7 +48,7 @@ export default function ProductDetail({ productId }) {
       <button
         type="button"
         onClick={() => navigate('home')}
-        className="mb-8 inline-flex items-center gap-1.5 text-sm text-slate-400 transition hover:text-white"
+        className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-content"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path
@@ -71,7 +71,7 @@ export default function ProductDetail({ productId }) {
               background: `radial-gradient(ellipse at 50% 45%, ${product.liquidColor}26, transparent 60%)`,
             }}
           />
-          <div className="relative h-[420px] overflow-hidden rounded-2xl border border-white/10 bg-ink-800/40 sm:h-[540px]">
+          <div className="stage-bg relative h-[420px] overflow-hidden rounded-2xl border border-line/10 sm:h-[540px]">
             <div className="absolute inset-0">
               <VialScene
                 product={product}
@@ -99,31 +99,31 @@ export default function ProductDetail({ productId }) {
             <RuoPill />
           </div>
 
-          <h1 className="mt-4 text-3xl font-semibold tracking-tightish text-white sm:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold tracking-tightish text-content sm:text-4xl">
             {product.name}
           </h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted">
             {CATEGORY_BLURB[product.category]}
           </p>
 
           <div className="mt-5 flex items-baseline gap-3">
-            <span className="text-2xl font-semibold text-white">
+            <span className="text-2xl font-semibold text-content">
               {formatUSD(variant.price)}
             </span>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-muted">
               {product.priceMin === product.priceMax
                 ? 'per unit'
                 : `range $${product.priceMin} – $${product.priceMax}`}
             </span>
           </div>
 
-          <p className="mt-6 max-w-prose text-sm leading-relaxed text-slate-400">
+          <p className="mt-6 max-w-prose text-sm leading-relaxed text-muted">
             {product.description}
           </p>
 
           {/* Variant / size selector */}
           <div className="mt-8">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wideish text-slate-500">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wideish text-muted">
               Size
             </h3>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -135,12 +135,12 @@ export default function ProductDetail({ productId }) {
                   className={
                     'rounded-xl border px-4 py-2.5 text-sm transition ' +
                     (i === variantIdx
-                      ? 'border-accent-teal/60 bg-accent-teal/10 text-white'
-                      : 'border-white/10 text-slate-300 hover:border-white/25')
+                      ? 'border-accent-teal/60 bg-accent-teal/10 text-content'
+                      : 'border-line/10 text-muted hover:border-line/25')
                   }
                 >
                   <span className="font-medium">{v.size}</span>
-                  <span className="ml-2 text-slate-500">
+                  <span className="ml-2 text-muted">
                     {formatUSD(v.price)}
                   </span>
                 </button>
@@ -153,21 +153,21 @@ export default function ProductDetail({ productId }) {
             <button
               type="button"
               onClick={() => addItem(product, variant)}
-              className="flex-1 rounded-xl bg-white py-3.5 text-sm font-semibold text-ink-900 transition hover:bg-slate-200"
+              className="flex-1 rounded-xl bg-content py-3.5 text-sm font-semibold text-page transition hover:bg-content/90"
             >
               Add to cart · {formatUSD(variant.price)}
             </button>
             <button
               type="button"
               onClick={() => navigate('lab')}
-              className="rounded-xl border border-white/15 px-5 py-3.5 text-sm font-medium text-slate-200 transition hover:border-white/30 hover:text-white"
+              className="rounded-xl border border-line/15 px-5 py-3.5 text-sm font-medium text-content transition hover:border-line/30"
             >
               View lab results
             </button>
           </div>
 
           {/* Spec block (neutral, laboratory-facing attributes only) */}
-          <div className="mt-9 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:grid-cols-3">
+          <div className="mt-9 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line/10 bg-line/10 sm:grid-cols-3">
             <Spec label="Purity" value={product.spec.purity} />
             <Spec label="Form" value={product.spec.form} />
             <Spec label="Storage" value={product.spec.storage} />
@@ -182,11 +182,11 @@ export default function ProductDetail({ productId }) {
 
 function Spec({ label, value }) {
   return (
-    <div className="bg-ink-800/60 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wideish text-slate-500">
+    <div className="bg-surface2 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wideish text-muted">
         {label}
       </p>
-      <p className="mt-1.5 text-sm leading-snug text-slate-200">{value}</p>
+      <p className="mt-1.5 text-sm leading-snug text-content">{value}</p>
     </div>
   );
 }

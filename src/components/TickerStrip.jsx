@@ -26,7 +26,7 @@ export default function TickerStrip() {
 
   return (
     <div
-      className="relative overflow-hidden border-y border-white/5 bg-white/[0.015] py-3.5"
+      className="relative overflow-hidden border-y border-line/5 bg-content/[0.015] py-3.5"
       style={fade}
       aria-hidden="true"
     >
@@ -36,7 +36,7 @@ export default function TickerStrip() {
             {ITEMS.map((item) => (
               <span
                 key={item}
-                className="flex items-center text-[11px] font-medium uppercase tracking-wideish text-slate-500"
+                className="flex items-center text-[11px] font-medium uppercase tracking-wideish text-muted"
               >
                 <span className="px-5">{item}</span>
                 <span className="text-accent-teal/40">✦</span>

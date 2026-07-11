@@ -1,10 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Manual (class-based) dark mode so the theme toggle controls it.
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        // Laboratory-meets-gallery dark palette
+        // Semantic tokens backed by CSS variables (see index.css). These flip
+        // between the light and dark themes; accent colors stay constant.
+        page: 'rgb(var(--page) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        surface2: 'rgb(var(--surface-2) / <alpha-value>)',
+        content: 'rgb(var(--content) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        line: 'rgb(var(--line) / <alpha-value>)',
+        // Fixed "display case" dark palette — used for the 3D stages, which
+        // stay cinematic dark in BOTH themes so the glass vials always read.
         ink: {
           900: '#050608',
           800: '#0a0c10',

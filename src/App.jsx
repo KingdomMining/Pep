@@ -25,7 +25,7 @@ export default function App() {
   const activeProductId = useStore((s) => s.activeProductId);
 
   return (
-    <div className="relative min-h-screen bg-ink-900">
+    <div className="relative min-h-screen bg-page">
       <AgeGate />
 
       {/* Only mount the experience after acceptance so nothing (including the

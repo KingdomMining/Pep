@@ -74,7 +74,7 @@ export default function ProductCard({ product, index = 0 }) {
           : '0 0 0 0 rgba(0,0,0,0)',
         transition: 'box-shadow 0.45s ease',
       }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] transition-colors duration-300 hover:border-white/25"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-line/10 bg-surface transition-colors duration-300 hover:border-line/25"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={leave}
       onMouseMove={onMouseMove}
@@ -86,7 +86,7 @@ export default function ProductCard({ product, index = 0 }) {
         type="button"
         onClick={open}
         aria-label={`View ${product.name}`}
-        className="relative block h-72 w-full cursor-pointer outline-none"
+        className="stage-bg relative block h-72 w-full cursor-pointer overflow-hidden outline-none"
       >
         {/* Category-tinted radial glow behind the canvas */}
         <div
@@ -97,14 +97,19 @@ export default function ProductCard({ product, index = 0 }) {
         />
         {/* Only mount the (heavier) canvas once near the viewport. The wrapper
             carries a definite size so the Canvas measures correctly. */}
+        {/* Only mount a live canvas for cards near the viewport, so the gallery
+            never exceeds the browser's WebGL context budget as the catalog
+            grows. VialScene nudges a re-measure on mount to size correctly. */}
         <div className="absolute inset-0">
-          <VialScene
-            product={product}
-            hovered={hovered}
-            reducedMotion={reducedMotion}
-            quality={quality}
-            paused={!inView}
-          />
+          {inView && (
+            <VialScene
+              product={product}
+              hovered={hovered}
+              reducedMotion={reducedMotion}
+              quality={quality}
+              paused={!inView}
+            />
+          )}
         </div>
         {/* Sheen: a soft light band sweeps across the stage on hover */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -116,19 +121,19 @@ export default function ProductCard({ product, index = 0 }) {
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <CategoryBadge category={product.category} />
-          <span className="text-sm font-medium text-slate-300">
+          <span className="text-sm font-medium text-muted">
             {formatPriceRange(product)}
           </span>
         </div>
 
-        <h3 className="text-lg font-semibold tracking-tightish text-white">
+        <h3 className="text-lg font-semibold tracking-tightish text-content">
           {product.name}
         </h3>
 
         <button
           type="button"
           onClick={open}
-          className="mt-auto inline-flex items-center gap-1.5 self-start rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-accent-teal/50 hover:bg-accent-teal/10 hover:text-white"
+          className="mt-auto inline-flex items-center gap-1.5 self-start rounded-lg border border-line/10 bg-content/5 px-4 py-2 text-sm font-medium text-content transition hover:border-accent-teal/50 hover:bg-accent-teal/10 hover:text-accent-teal"
         >
           View
           <svg

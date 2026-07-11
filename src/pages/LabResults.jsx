@@ -57,10 +57,10 @@ export default function LabResults() {
         <div className="flex justify-center">
           <RuoPill />
         </div>
-        <h1 className="mt-5 text-4xl font-semibold tracking-tightish text-white sm:text-5xl">
+        <h1 className="mt-5 text-4xl font-semibold tracking-tightish text-content sm:text-5xl">
           Third-party verification
         </h1>
-        <p className="mt-4 text-base leading-relaxed text-slate-400">
+        <p className="mt-4 text-base leading-relaxed text-muted">
           Every production lot is submitted to independent laboratories for
           analytical testing. Certificates of analysis are issued per lot and
           available on request for verified researchers.
@@ -75,9 +75,9 @@ export default function LabResults() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
-            className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-6"
+            className="rounded-2xl border border-line/10 bg-gradient-to-b from-content/[0.04] to-transparent p-6"
           >
-            <div className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-accent-teal">
+            <div className="grid h-11 w-11 place-items-center rounded-xl border border-line/10 bg-content/5 text-accent-teal">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                 <path
                   d={panel.icon}
@@ -88,10 +88,10 @@ export default function LabResults() {
                 />
               </svg>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-white">
+            <h3 className="mt-4 text-lg font-semibold text-content">
               {panel.title}
             </h3>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            <p className="mt-2 text-sm leading-relaxed text-muted">
               {panel.body}
             </p>
           </motion.div>
@@ -99,8 +99,8 @@ export default function LabResults() {
       </div>
 
       {/* Process strip */}
-      <div className="relative mt-16 overflow-hidden rounded-2xl border border-white/10 bg-ink-800/50 p-8 sm:p-10">
-        <h2 className="text-xl font-semibold text-white">
+      <div className="relative mt-16 overflow-hidden rounded-2xl border border-line/10 bg-surface2/50 p-8 sm:p-10">
+        <h2 className="text-xl font-semibold text-content">
           Chain of verification
         </h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-4">
@@ -114,8 +114,8 @@ export default function LabResults() {
               <span className="text-2xl font-semibold text-accent-teal/70">
                 {n}
               </span>
-              <h4 className="mt-2 text-sm font-semibold text-white">{t}</h4>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+              <h4 className="mt-2 text-sm font-semibold text-content">{t}</h4>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
                 {d}
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function LabResults() {
         <button
           type="button"
           onClick={() => navigate('home')}
-          className="rounded-xl border border-white/15 px-6 py-3 text-sm font-medium text-slate-200 transition hover:border-white/30 hover:text-white"
+          className="rounded-xl border border-line/15 px-6 py-3 text-sm font-medium text-content transition hover:border-line/30 hover:text-content"
         >
           Back to catalog
         </button>

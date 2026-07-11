@@ -39,10 +39,10 @@ export default function AgeGate() {
           aria-labelledby="age-gate-title"
         >
           {/* Opaque backdrop so no content is visible behind the gate. */}
-          <div className="absolute inset-0 bg-ink-900/95 backdrop-blur-xl" />
+          <div className="absolute inset-0 bg-page/95 backdrop-blur-xl" />
 
           <motion.div
-            className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-ink-700/90 shadow-2xl"
+            className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-line/10 bg-surface/90 shadow-2xl"
             initial={{ scale: 0.94, y: 16, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
@@ -57,11 +57,11 @@ export default function AgeGate() {
               </p>
               <h1
                 id="age-gate-title"
-                className="mt-2 text-2xl font-semibold text-white sm:text-3xl"
+                className="mt-2 text-2xl font-semibold text-content sm:text-3xl"
               >
                 {AGE_LINE}
               </h1>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+              <p className="mt-3 text-sm leading-relaxed text-muted">
                 Access to AEGIS Research is restricted to verified researchers.
                 Please confirm the following before entering.
               </p>
@@ -70,7 +70,7 @@ export default function AgeGate() {
                 {CONFIRMATIONS.map((label, i) => (
                   <label
                     key={i}
-                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3.5 text-sm text-slate-300 transition hover:border-white/20 hover:bg-white/[0.04]"
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-line/10 bg-content/[0.02] p-3.5 text-sm text-muted transition hover:border-line/20 hover:bg-content/[0.04]"
                   >
                     <input
                       type="checkbox"
@@ -87,12 +87,12 @@ export default function AgeGate() {
                 type="button"
                 disabled={!allChecked}
                 onClick={acceptAge}
-                className="mt-7 w-full rounded-xl bg-white py-3.5 text-sm font-semibold text-ink-900 transition enabled:hover:bg-slate-200 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
+                className="mt-7 w-full rounded-xl bg-content py-3.5 text-sm font-semibold text-page transition enabled:hover:bg-content/90 disabled:cursor-not-allowed disabled:bg-content/10 disabled:text-muted"
               >
                 {allChecked ? 'Enter site' : 'Confirm all statements to continue'}
               </button>
 
-              <div className="mt-5 space-y-1.5 border-t border-white/5 pt-4 text-[11px] leading-relaxed text-slate-500">
+              <div className="mt-5 space-y-1.5 border-t border-line/5 pt-4 text-[11px] leading-relaxed text-muted">
                 <p>{RUO_LINE}</p>
                 <p>{FDA_LINE}</p>
               </div>

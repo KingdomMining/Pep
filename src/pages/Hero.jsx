@@ -27,7 +27,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden"
+      className="stage-bg relative flex min-h-[100svh] items-center justify-center overflow-hidden"
     >
       {/* Signature vial fills the scene */}
       <div className="absolute inset-0">

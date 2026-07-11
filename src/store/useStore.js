@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Toggle the `dark` class on <html>, which drives all semantic color tokens.
+function applyThemeClass(theme) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', theme !== 'light');
+}
+
 // ---------------------------------------------------------------------------
 // Global app state: age/RUO gate acceptance, cart, and lightweight routing.
 //
@@ -17,6 +23,19 @@ export const useStore = create(
       acceptAge: () => set({ ageAccepted: true }),
       // (No reset in the UI; exposed for testing / a future "sign out".)
       resetAge: () => set({ ageAccepted: false }),
+
+      // --- Theme ('dark' | 'light') ----------------------------------------
+      theme: 'dark',
+      setTheme: (theme) => {
+        applyThemeClass(theme);
+        set({ theme });
+      },
+      toggleTheme: () =>
+        set((s) => {
+          const next = s.theme === 'dark' ? 'light' : 'dark';
+          applyThemeClass(next);
+          return { theme: next };
+        }),
 
       // --- Lightweight view routing (SPA, no router dependency) -------------
       // view: 'home' | 'product' | 'lab'
@@ -87,7 +106,15 @@ export const useStore = create(
     {
       name: 'aegis-research-store',
       // Only persist durable state — not transient UI like cartOpen/view.
-      partialize: (s) => ({ ageAccepted: s.ageAccepted, items: s.items }),
+      partialize: (s) => ({
+        ageAccepted: s.ageAccepted,
+        items: s.items,
+        theme: s.theme,
+      }),
+      // Re-apply the persisted theme class after the store rehydrates.
+      onRehydrateStorage: () => (state) => {
+        if (state) applyThemeClass(state.theme);
+      },
     }
   )
 );

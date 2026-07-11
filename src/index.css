@@ -3,6 +3,28 @@
 @tailwind utilities;
 
 @layer base {
+  /* Semantic color tokens (RGB channels for Tailwind's <alpha-value>).
+     :root = light theme; .dark = dark theme. */
+  :root {
+    --page: 243 245 249; /* app background */
+    --surface: 255 255 255; /* cards, nav, panels */
+    --surface-2: 247 249 252; /* elevated / footer */
+    --content: 17 20 27; /* primary text */
+    --muted: 88 98 114; /* secondary text */
+    --line: 17 20 27; /* borders (used at low alpha) */
+    color-scheme: light;
+  }
+
+  .dark {
+    --page: 5 6 8;
+    --surface: 15 18 25;
+    --surface-2: 10 12 17;
+    --content: 226 232 240;
+    --muted: 148 163 184;
+    --line: 255 255 255;
+    color-scheme: dark;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
@@ -10,8 +32,9 @@
   }
 
   body {
-    @apply bg-ink-900 text-slate-200 font-sans antialiased;
+    @apply bg-page text-content font-sans antialiased;
     overflow-x: hidden;
+    transition: background-color 0.4s ease, color 0.4s ease;
   }
 
   /* Respect users who prefer reduced motion: kill smooth scroll + long
@@ -72,6 +95,18 @@
     to {
       background-position: 200% center;
     }
+  }
+
+  /* Cinematic "display case" backdrop for 3D stages. Stays dark in BOTH
+     themes so the glowing glass vials always read against it. */
+  .stage-bg {
+    background-color: #04050a;
+    background-image: radial-gradient(
+        ellipse at 50% 30%,
+        rgba(30, 40, 60, 0.35),
+        transparent 60%
+      ),
+      radial-gradient(ellipse at 50% 120%, rgba(10, 14, 22, 0.6), transparent 70%);
   }
 
   /* Soft radial vignette used behind hero + detail scenes. */

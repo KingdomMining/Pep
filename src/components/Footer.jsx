@@ -11,7 +11,7 @@ export default function Footer() {
   const navigate = useStore((s) => s.navigate);
 
   return (
-    <footer className="relative border-t border-white/10 bg-ink-800/60">
+    <footer className="relative border-t border-line/10 bg-surface2/60">
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
@@ -19,25 +19,25 @@ export default function Footer() {
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-accent-teal to-accent-blue text-sm font-bold text-ink-900">
                 Æ
               </span>
-              <span className="text-sm font-semibold uppercase tracking-wideish text-white">
+              <span className="text-sm font-semibold uppercase tracking-wideish text-content">
                 AEGIS Research
               </span>
             </div>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted">
               Premium, third-party verified reference materials supplied
               exclusively for laboratory research.
             </p>
           </div>
 
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wideish text-slate-500">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wideish text-muted">
               Explore
             </h4>
-            <ul className="mt-4 space-y-2.5 text-sm text-slate-400">
+            <ul className="mt-4 space-y-2.5 text-sm text-muted">
               <li>
                 <button
                   onClick={() => navigate('home')}
-                  className="transition hover:text-white"
+                  className="transition hover:text-content"
                 >
                   Catalog
                 </button>
@@ -45,7 +45,7 @@ export default function Footer() {
               <li>
                 <button
                   onClick={() => navigate('lab')}
-                  className="transition hover:text-white"
+                  className="transition hover:text-content"
                 >
                   Lab results &amp; verification
                 </button>
@@ -54,23 +54,23 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-[11px] font-semibold uppercase tracking-wideish text-slate-500">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wideish text-muted">
               Contact
             </h4>
-            <ul className="mt-4 space-y-2.5 text-sm text-slate-400">
+            <ul className="mt-4 space-y-2.5 text-sm text-muted">
               <li>research@aegis.example</li>
-              <li className="text-slate-500">Contact placeholder</li>
+              <li className="text-muted">Contact placeholder</li>
             </ul>
           </div>
         </div>
 
         {/* Required compliance block */}
-        <div className="mt-12 space-y-2 border-t border-white/5 pt-8 text-xs leading-relaxed text-slate-500">
-          <p className="font-medium text-slate-300">
+        <div className="mt-12 space-y-2 border-t border-line/5 pt-8 text-xs leading-relaxed text-muted">
+          <p className="font-medium text-muted">
             21+ only. {RUO_LINE}
           </p>
           <p>{FDA_LINE}</p>
-          <p className="pt-2 text-slate-600">
+          <p className="pt-2 text-muted">
             © {new Date().getFullYear()} AEGIS Research. All product names are
             used for identification purposes only. This is a design showcase
             demo; no orders are processed.
