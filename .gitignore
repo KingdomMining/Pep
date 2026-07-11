@@ -1,0 +1,9 @@
+node_modules
+dist-ssr
+*.local
+.DS_Store
+.vite
+
+# Build output is committed so index.html can be opened directly (see README).
+# Comment the next line out if you prefer to keep dist/ untracked.
+# dist
