@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import VialScene from '../components/VialScene.jsx';
 import Molecule2D from '../components/Molecule2D.jsx';
+import Formula from '../components/Formula.jsx';
 import CoaModal from '../components/CoaModal.jsx';
 import SdsModal from '../components/SdsModal.jsx';
+import { getStructure } from '../data/structures.js';
 import { CategoryBadge, DisclaimerBlock, RuoPill } from '../components/Compliance.jsx';
 import {
   getProduct,
@@ -46,6 +48,10 @@ export default function ProductDetail({ productId }) {
 
   const variant = product.variants[variantIdx];
   const related = relatedProducts(product);
+  // Structure-derived formula/MW (so Properties always matches the drawing).
+  const struct = getStructure(product.id);
+  const formulaNode = <Formula value={struct ? struct.formula : product.props.formula} />;
+  const molarMass = struct ? `${struct.mw.toFixed(1)} g/mol` : product.props.molarMass;
 
   const downloadSds = () =>
     downloadText(`SDS_${product.name.replace(/\W+/g, '_')}.txt`, sdsToText(buildSds(product)));
@@ -195,8 +201,8 @@ export default function ProductDetail({ productId }) {
           <SectionTitle eyebrow="Reference" title="Properties" />
           <dl className="mt-4 divide-y divide-line/10 text-sm">
             <Prop k="CAS Number" v={product.props.cas} />
-            <Prop k="Molecular Formula" v={product.props.formula} />
-            <Prop k="Molar Mass" v={product.props.molarMass} />
+            <Prop k="Molecular Formula" v={formulaNode} />
+            <Prop k="Molar Mass" v={molarMass} />
             <Prop k="Sequence" v={product.props.sequence} />
             <Prop k="Appearance" v={product.props.appearance} />
             <Prop k="Solubility" v={product.props.solubility} />
