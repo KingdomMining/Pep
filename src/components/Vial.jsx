@@ -75,7 +75,11 @@ export default function Vial({
   ...groupProps
 }) {
   const group = useRef();
+  const liquid = useRef(); // the sloshing liquid group
   const currentSpin = useRef(ANIM.idleSpin);
+  // Slosh state: damped-spring tilt of the liquid + a low-passed view velocity.
+  const slosh = useRef({ roll: 0, rollV: 0, pitch: 0, pitchV: 0, vel: 0 });
+  const prevAz = useRef(null);
   const bodyGeo = useVialGeometry();
   const baseY = CENTER_Y + offsetY;
 
@@ -110,6 +114,7 @@ export default function Vial({
       g.rotation.y = ANIM.staticTilt;
       g.position.y = baseY;
       g.scale.setScalar(1);
+      if (liquid.current) liquid.current.rotation.set(0, 0, 0);
       return;
     }
 
@@ -136,8 +141,53 @@ export default function Vial({
 
     // --- Scale: ease up slightly on hover ---------------------------------
     const targetScale = hovered ? ANIM.hoverScale : 1;
-    const s = THREE.MathUtils.damp(g.scale.x, targetScale, ANIM.scaleEase, dt);
-    g.scale.setScalar(s);
+    const sc = THREE.MathUtils.damp(g.scale.x, targetScale, ANIM.scaleEase, dt);
+    g.scale.setScalar(sc);
+
+    // --- Liquid slosh -----------------------------------------------------
+    // Tilt the liquid with a damped spring driven by how fast the vial appears
+    // to spin from the camera's POV — this works both when the vial itself
+    // rotates (gallery) and when the camera orbits a still vial (detail drag).
+    // A steady tilt builds up while spinning and springs back with overshoot
+    // when the motion stops, so the fluid visibly sloshes and settles.
+    if (liquid.current) {
+      g.updateWorldMatrix(true, false); // ensure this frame's transform
+      const camLocal = group.current
+        ? group.current.worldToLocal(state.camera.position.clone())
+        : null;
+      if (camLocal) {
+        const az = Math.atan2(camLocal.x, camLocal.z);
+        let dAz = 0;
+        if (prevAz.current !== null) {
+          dAz = az - prevAz.current;
+          if (dAz > Math.PI) dAz -= Math.PI * 2;
+          else if (dAz < -Math.PI) dAz += Math.PI * 2;
+        }
+        prevAz.current = az;
+
+        const sl = slosh.current;
+        const apparentVel = dt > 0 ? dAz / dt : 0;
+        sl.vel += (apparentVel - sl.vel) * Math.min(1, 8 * dt); // low-pass
+
+        // Roll: sideways slosh from spin speed (springs back w/ overshoot).
+        const targetRoll = THREE.MathUtils.clamp(-sl.vel * 0.06, -0.12, 0.12);
+        sl.rollV += ((targetRoll - sl.roll) * 90 - sl.rollV * 6) * dt;
+        sl.roll += sl.rollV * dt;
+
+        // Pitch: subtle wobble from the vertical bob's acceleration.
+        const bobAcc =
+          -Math.sin(t * ANIM.bobFrequency) *
+          ANIM.bobAmplitude *
+          ANIM.bobFrequency *
+          ANIM.bobFrequency;
+        const targetPitch = THREE.MathUtils.clamp(bobAcc * 0.6, -0.04, 0.04);
+        sl.pitchV += ((targetPitch - sl.pitch) * 70 - sl.pitchV * 7) * dt;
+        sl.pitch += sl.pitchV * dt;
+
+        liquid.current.rotation.z = sl.roll;
+        liquid.current.rotation.x = sl.pitch;
+      }
+    }
   });
 
   return (
@@ -165,15 +215,20 @@ export default function Vial({
         />
       </mesh>
 
-      {/* --- Liquid fill: inner cylinder, ~55% up the body ---------------- */}
-      <mesh position={[0, -0.42, 0]} material={liquidMat}>
-        <cylinderGeometry args={[0.46, 0.46, 0.95, 48, 1]} />
-      </mesh>
-      {/* Meniscus: a thin brighter disc at the liquid surface. */}
-      <mesh position={[0, 0.055, 0]}>
-        <cylinderGeometry args={[0.455, 0.455, 0.01, 48]} />
-        <meshBasicMaterial color={liquidColor} transparent opacity={0.5} />
-      </mesh>
+      {/* --- Liquid fill (sloshing group; tilt driven in useFrame) --------
+          Pivots about the liquid's centre so the surface tips as it sloshes.
+          Radius is kept a touch under the glass wall so the tilt never clips
+          through it. */}
+      <group ref={liquid} position={[0, -0.42, 0]}>
+        <mesh material={liquidMat}>
+          <cylinderGeometry args={[0.44, 0.44, 0.9, 48, 1]} />
+        </mesh>
+        {/* Meniscus: a thin brighter disc at the liquid surface. */}
+        <mesh position={[0, 0.45, 0]}>
+          <cylinderGeometry args={[0.435, 0.435, 0.01, 48]} />
+          <meshBasicMaterial color={liquidColor} transparent opacity={0.5} />
+        </mesh>
+      </group>
 
       {/* --- Sticker label wrapped on the body --------------------------- */}
       {label && <VialLabel name={label} />}
@@ -223,12 +278,12 @@ function VialLabel({ name }) {
       />
       <meshStandardMaterial
         map={texture}
-        // Self-lit a little so the sticker stays legible even in shadow, while
-        // the dark text stays dark (emissiveMap = the same art).
+        // Self-lit just enough to stay legible in shadow, but low so the light
+        // panel doesn't blow out under bloom (which would wash the text).
         emissive="#ffffff"
         emissiveMap={texture}
-        emissiveIntensity={0.22}
-        roughness={0.55}
+        emissiveIntensity={0.14}
+        roughness={0.6}
         metalness={0}
         transparent
         side={THREE.FrontSide}
@@ -255,9 +310,10 @@ function makeLabelTexture(name) {
   // --- Sticker panel (rounded, light, subtly graded) --------------------
   const pad = 24;
   const r = 34;
+  // Slightly off-white so the panel doesn't blow out under bloom.
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#f7f9fc');
-  grad.addColorStop(1, '#e9edf3');
+  grad.addColorStop(0, '#eceff4');
+  grad.addColorStop(1, '#dce1e9');
   roundRect(ctx, pad, pad, W - pad * 2, H - pad * 2, r);
   ctx.fillStyle = grad;
   ctx.fill();

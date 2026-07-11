@@ -1,18 +1,12 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import {
   ContactShadows,
   Environment,
   Lightformer,
-  OrbitControls,
   Sparkles,
 } from '@react-three/drei';
-import {
-  EffectComposer,
-  Bloom,
-  DepthOfField,
-  Vignette,
-} from '@react-three/postprocessing';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import Vial from './Vial.jsx';
 import AmbientField from './AmbientField.jsx';
@@ -30,20 +24,37 @@ import AmbientField from './AmbientField.jsx';
 //     away from the camera, so the sticker spends less time hidden.
 // ---------------------------------------------------------------------------
 
-const BLOOM = { idle: 0.7, hover: 1.6, ease: 4 };
+// We never use R3F's built-in DOM pointer events (gallery hover is driven from
+// HTML; the detail drag uses its own listeners in OrbitRig). Its event manager
+// occasionally raced to connect() against a null target in the production
+// build and threw. This no-op manager skips that DOM wiring entirely.
+const NO_EVENTS = () => ({
+  enabled: false,
+  priority: 0,
+  connected: false,
+  handlers: {},
+  connect: () => {},
+  disconnect: () => {},
+  compute: () => {},
+});
 
-function HoverBloom({ hovered }) {
+// A high luminance threshold means only genuine specular highlights bloom, so
+// the light sticker panel + text never wash out — this keeps the label crisp
+// even when the overall intensity is turned up. The detail view (interactive)
+// stays gentle so its large centered label is pristine; the hero pushes the
+// glow for drama.
+function HoverBloom({ hovered, idle, hover }) {
   const ref = useRef();
-  const hoveredRef = useRef(hovered);
-  hoveredRef.current = hovered;
+  const state = useRef({ hovered, idle, hover });
+  state.current = { hovered, idle, hover };
 
   useFrame((_, delta) => {
     if (!ref.current) return;
-    const target = hoveredRef.current ? BLOOM.hover : BLOOM.idle;
+    const { hovered: h, idle: i, hover: hv } = state.current;
     ref.current.intensity = THREE.MathUtils.damp(
       ref.current.intensity,
-      target,
-      BLOOM.ease,
+      h ? hv : i,
+      4,
       Math.min(delta, 0.05)
     );
   });
@@ -51,11 +62,11 @@ function HoverBloom({ hovered }) {
   return (
     <Bloom
       ref={ref}
-      intensity={BLOOM.idle}
-      luminanceThreshold={0.15}
-      luminanceSmoothing={0.9}
+      intensity={idle}
+      luminanceThreshold={0.62}
+      luminanceSmoothing={0.85}
       mipmapBlur
-      radius={0.7}
+      radius={0.6}
     />
   );
 }
@@ -138,36 +149,111 @@ function ParallaxRig({ enabled }) {
 }
 
 /**
- * OrbitControls-lite for the detail view whose auto-rotate is label-aware:
- * the label faces +Z, so while the camera's azimuth carries it behind the
- * vial we speed the rotation up — the sticker spends less time hidden.
+ * OrbitRig — a small, dependency-free orbit control for the detail view.
+ * Drag to spin the vial (with release inertia), wheel to zoom (clamped, no
+ * pan). When idle it slowly auto-rotates, speeding up while the label faces
+ * away so the sticker spends less time hidden. Replacing drei's OrbitControls
+ * avoids a flaky connect() bug in this drei/three-stdlib combo and gives the
+ * liquid slosh a nice inertial spin to settle against.
  */
-function AdaptiveOrbit({ reducedMotion }) {
-  const ref = useRef();
+function OrbitRig({ reducedMotion }) {
+  const gl = useThree((s) => s.gl);
+  const camera = useThree((s) => s.camera);
 
-  useFrame(() => {
-    const c = ref.current;
-    if (!c || !c.autoRotate) return;
-    const hidden = (1 - Math.cos(c.getAzimuthalAngle())) / 2;
-    c.autoRotateSpeed = 0.9 * (1 + 2.6 * Math.pow(hidden, 1.6));
+  const st = useRef({
+    theta: 0, // azimuth (label faces the camera at 0)
+    phi: Math.PI / 2 - 0.02, // polar from +Y (near level)
+    r: camera.position.length() || 4.2,
+    targetR: camera.position.length() || 4.2,
+    vTheta: 0,
+    prevTheta: 0,
+    dragging: false,
+    lastX: 0,
+    lastY: 0,
   });
 
-  return (
-    <OrbitControls
-      ref={ref}
-      enablePan={false}
-      enableZoom
-      minDistance={2.6}
-      maxDistance={5.5}
-      minPolarAngle={Math.PI * 0.2}
-      maxPolarAngle={Math.PI * 0.8}
-      autoRotate={!reducedMotion}
-      autoRotateSpeed={0.9}
-      rotateSpeed={0.6}
-      enableDamping
-      dampingFactor={0.08}
-    />
-  );
+  const MIN_R = 2.6;
+  const MAX_R = 5.5;
+  const MIN_PHI = Math.PI * 0.2;
+  const MAX_PHI = Math.PI * 0.8;
+
+  useEffect(() => {
+    const el = gl.domElement;
+    el.style.touchAction = 'none';
+    el.style.cursor = 'grab';
+
+    const down = (e) => {
+      st.current.dragging = true;
+      st.current.lastX = e.clientX;
+      st.current.lastY = e.clientY;
+      el.style.cursor = 'grabbing';
+      el.setPointerCapture?.(e.pointerId);
+    };
+    const move = (e) => {
+      const s = st.current;
+      if (!s.dragging) return;
+      const dx = e.clientX - s.lastX;
+      const dy = e.clientY - s.lastY;
+      s.lastX = e.clientX;
+      s.lastY = e.clientY;
+      s.theta -= dx * 0.01;
+      s.phi = Math.min(MAX_PHI, Math.max(MIN_PHI, s.phi - dy * 0.01));
+    };
+    const up = (e) => {
+      st.current.dragging = false;
+      el.style.cursor = 'grab';
+      el.releasePointerCapture?.(e.pointerId);
+    };
+    const wheel = (e) => {
+      e.preventDefault();
+      const s = st.current;
+      s.targetR = Math.min(MAX_R, Math.max(MIN_R, s.targetR + e.deltaY * 0.002));
+    };
+
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', wheel, { passive: false });
+    return () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      el.removeEventListener('wheel', wheel);
+      el.style.cursor = '';
+    };
+  }, [gl]);
+
+  useFrame((_, delta) => {
+    const s = st.current;
+    const dt = Math.min(delta, 0.05);
+
+    if (s.dragging) {
+      // Measure the drag's angular velocity for release inertia.
+      s.vTheta = dt > 0 ? (s.theta - s.prevTheta) / dt : 0;
+    } else {
+      // Idle auto-rotate target, faster while the label (θ=0) faces away.
+      const hidden = (1 - Math.cos(s.theta)) / 2;
+      const autoV = reducedMotion ? 0 : 0.5 * (1 + 2.2 * Math.pow(hidden, 1.6));
+      s.vTheta = THREE.MathUtils.damp(s.vTheta, autoV, 1.2, dt); // inertia → auto
+      s.theta += s.vTheta * dt;
+      // Gently self-level the tilt when not being dragged.
+      s.phi = THREE.MathUtils.damp(s.phi, Math.PI / 2 - 0.02, 1.4, dt);
+    }
+    s.prevTheta = s.theta;
+
+    s.r = THREE.MathUtils.damp(s.r, s.targetR, 8, dt);
+    const sinPhi = Math.sin(s.phi);
+    camera.position.set(
+      s.r * sinPhi * Math.sin(s.theta),
+      s.r * Math.cos(s.phi),
+      s.r * sinPhi * Math.cos(s.theta)
+    );
+    camera.lookAt(0, 0, 0);
+  });
+
+  return null;
 }
 
 export default function VialScene({
@@ -219,6 +305,7 @@ export default function VialScene({
       dpr={quality.dpr}
       frameloop={frameloop}
       camera={camera}
+      events={NO_EVENTS}
       gl={{
         antialias: true,
         alpha: true,
@@ -227,14 +314,14 @@ export default function VialScene({
       }}
       // Keep colors filmic + let alpha through so CSS gradient shows behind.
       onCreated={({ gl }) => {
-        gl.toneMappingExposure = 1.1;
+        gl.toneMappingExposure = 1.0;
       }}
     >
       {/* --- Lighting: soft key + rim --------------------------------------- */}
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.4} />
       <directionalLight
         position={[3, 4, 3]}
-        intensity={1.6}
+        intensity={1.35}
         color="#ffffff"
       />
       {/* Rim light picks out the glass edge */}
@@ -291,20 +378,17 @@ export default function VialScene({
           />
         )}
 
-        {/* --- Post: bloom (hover-reactive) + DoF on big scenes + vignette --- */}
+        {/* --- Post: bloom + vignette. No depth-of-field: it was blurring the
+             product + label. The detail (interactive) keeps bloom gentle so
+             its label is pristine; the hero pushes it for drama. --- */}
         {bloom && (
           <EffectComposer disableNormalPass multisampling={big ? 4 : 0}>
-            <HoverBloom hovered={hovered} />
-            {big ? (
-              <DepthOfField
-                focusDistance={0.01}
-                focalLength={0.06}
-                bokehScale={2.2}
-              />
-            ) : (
-              <></>
-            )}
-            <Vignette eskil={false} offset={0.25} darkness={0.85} />
+            <HoverBloom
+              hovered={hovered}
+              idle={interactive ? 0.5 : 0.95}
+              hover={interactive ? 0.85 : 1.25}
+            />
+            <Vignette eskil={false} offset={0.28} darkness={0.8} />
           </EffectComposer>
         )}
       </Suspense>
@@ -312,8 +396,8 @@ export default function VialScene({
       {/* Hero-style scenes lean gently toward the mouse */}
       <ParallaxRig enabled={big && !interactive && !reducedMotion} />
 
-      {/* --- Label-aware OrbitControls-lite on detail views ---------------- */}
-      {interactive && <AdaptiveOrbit reducedMotion={reducedMotion} />}
+      {/* --- Custom drag-to-spin + zoom on detail views ------------------- */}
+      {interactive && <OrbitRig reducedMotion={reducedMotion} />}
     </Canvas>
   );
 }
