@@ -1,0 +1,8 @@
+{
+  "name": "@lowvolt/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "lv": "./src/index.ts" },
+  "dependencies": { "@lowvolt/schema": "*", "@lowvolt/catalog": "*" }
+}

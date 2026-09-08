@@ -1,0 +1,25 @@
+{
+  "name": "lowvolt-os",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Low-voltage estimating & design-validation platform. Phase 1: access control.",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --build --force",
+    "lv": "tsx packages/cli/src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  }
+}
